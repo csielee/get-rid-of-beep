@@ -1,0 +1,23 @@
+{
+    "manifest_version": 2,
+  
+    "name": "get rid of beep",
+    "description": "",
+    "version": "1.0",
+    "background" : {
+      "scripts" : ["gpu.js", "backgroundServer.js"],
+      "persistent" : false
+    },
+    "browser_action": {
+      "default_icon": "icon.png",
+      "default_popup": "popup.html"
+    },
+    "permissions": [
+      "activeTab",
+      "storage",
+      "tabs", 
+      "http://*/*", 
+      "https://*/*",
+      "file:///*"
+    ]
+  }
