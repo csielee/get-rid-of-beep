@@ -21,12 +21,16 @@ function grayKernel(length) {
 }
 
 // make random
-var arr = [0,1,2,3,4,5,6,7,8];
+const windowSize = 3;
+var arr=[];
+for (let i=0;i<windowSize*windowSize;i++)
+    arr.push(i);
+
 var randomArr = [];
 while(arr.length!=0) {
     // get a random number (<arr.length)
     let r = (Math.floor(Math.random()*(arr.length)))%arr.length;
-    randomArr.push(arr.splice(r,1));
+    randomArr.push(arr.splice(r,1)[0]);
 }
 
 function mosaicKernel(length,w,h) {
@@ -38,31 +42,44 @@ function mosaicKernel(length,w,h) {
             depth : 4,
             width : w,
             height : h,
-            windowSize : 3,
+            windowSize : windowSize,
         }
     }
-    var kernel = gpu.createKernel(function(data, random) {
-        var colspace = (this.constants.width/this.constants.windowSize)*this.constants.depth
+    var kernel = gpu.createKernel(function(data,random,random_length) {
+        var colspace = this.constants.width*this.constants.depth;
         var x = this.thread.x % colspace;
+        x = Math.floor(x/this.constants.windowSize)
         x = Math.floor(x/this.constants.depth)
         var y = this.thread.x / colspace;
         y = Math.floor(y);
+        y = Math.floor(y/this.constants.windowSize)
 
-        var r = random[this.thread.x % random.length];
-        return 0;
-    },option).setOutput(length/(option.constants.width*option.constants.height));
+        var r = random[x % random_length];
+        x = x*this.constants.windowSize + r % this.constants.windowSize;
+        y = y*this.constants.windowSize + Math.floor(r / this.constants.windowSize);
+        //if (x > this.constants.width || y > this.constants.height)
+        //    return 0;
+        
+        var pixel = data[x*this.constants.depth+y*this.constants.width*this.constants.depth+this.thread.x%this.constants.depth];
+        return pixel;
+    },option).setOutput([length]);
     return kernel;
 }
 
 function testMosaic() {
-    let data = [
-        255,0,0,255, 0,255,0,255, 0,0,255,255,
-        255,255,0,255, 0,255,255,255, 255,0,255,255,
-        128,0,128,255, 0,128,128,255,128,128,0,255,
+    var data = [
+        255,0,0,255, 0,255,0,255, /*0,0,255,255,*/
+        255,255,0,255, 0,255,255,255, /*255,0,255,255,*/
+        /*128,0,128,255, 0,128,128,255, 128,128,0,255,*/
     ]
-    let kernel = mosaicKernel(36,3,3);
-    var result = kernel(data,randomArr);
+    var kernel = mosaicKernel(data.length,2,2);
+    var result = kernel(data, randomArr, randomArr.length);
     return result;
+}
+
+function mosaic(data, width, height) {
+    var kernel = mosaicKernel(data.length, width, height);
+    return kernel(data, randomArr, randomArr.length);
 }
 
 chrome.runtime.onMessage.addListener(
@@ -71,11 +88,12 @@ chrome.runtime.onMessage.addListener(
             "取得到tab，這是來自內容腳本的訊息：" + sender.tab.url   
             : "沒有tab，這是來自擴充功能內部的訊息");  
         // create gpu kernel
-        let kernel = grayKernel(data.length)
+        //let kernel = grayKernel(data.length)
         // use gpu kernel
         var length = data.length;
-        var result = kernel(data);
-        data = Object.assign({}, result)
+        //var result = kernel(data);
+        var result = mosaic(data, data.width, data.height)
+        data = Object.assign(data, result)
         data.length = length;
         
         sendResponse(data);

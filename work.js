@@ -29,6 +29,8 @@ function loadingImage(url, W, H) {
             console.log(imgdata.data)
             var test = Object.assign({}, imgdata.data);
             test.length = imgdata.data.length;
+            test.width = W;
+            test.height = H;
             chrome.runtime.sendMessage(test, (response) => {
                 console.log(response);
                 var resData =  new Uint8ClampedArray(response); 
