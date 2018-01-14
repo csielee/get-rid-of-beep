@@ -105,8 +105,19 @@ chrome.runtime.onMessage.addListener(
         //var result = kernel(data);
         var faces = face(data, data.width, data.height)
         var result = mosaic(data, data.width, data.height)
-        data = Object.assign(data, result)
-        data.length = length;
+        faces.forEach(rect => {
+            var colspace = data.width
+            for (let x = rect.x;x <= rect.x + rect.width;x++)
+                for (let y = rect.y ; y <= rect.y + rect.height;y++) {
+                    for (let d = 0;d<4;d++) {
+                        var index = x*4 + y*data.width*4 + d;
+                        data[index] = result[index];
+                    }
+                }
+        })
+
+        /*data = Object.assign(data, result)
+        data.length = length;*/
         
         sendResponse(data);
 });
