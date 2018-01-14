@@ -82,6 +82,17 @@ function mosaic(data, width, height) {
     return kernel(data, randomArr, randomArr.length);
 }
 
+function face(img, W, H) {
+    var retAry= [];
+    var tracker = new tracking.ObjectTracker('face');
+    var ret = tracker.track(img, W, H);
+    ret.forEach(function(rect) {
+        console.log(rect);
+        retAry.push(rect);
+    });
+    return retAry;
+}
+
 chrome.runtime.onMessage.addListener(
     function(data, sender, sendResponse) {  
         console.log(sender.tab ?   
@@ -92,6 +103,7 @@ chrome.runtime.onMessage.addListener(
         // use gpu kernel
         var length = data.length;
         //var result = kernel(data);
+        var faces = face(data, data.width, data.height)
         var result = mosaic(data, data.width, data.height)
         data = Object.assign(data, result)
         data.length = length;
