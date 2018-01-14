@@ -14,6 +14,7 @@ function loadingImage(url, W, H) {
         loadimg.onload = () => {
             if (loadimg.width == 0 || loadimg.height == 0 || W == 0 || H == 0) {
                 resolve(url)
+                return;
             }
             var canvas = document.createElement('canvas');
             canvas.width = W;
@@ -27,16 +28,24 @@ function loadingImage(url, W, H) {
             test.length = imgdata.data.length;
             test.width = W;
             test.height = H;
+            // use cpu
+            if (choice === 0)
+                test.useCPU = true;
+            else
+                test.useGPU = true;
             startTime = new Date().getTime();
             chrome.runtime.sendMessage(test, (response) => {
                 endTime = new Date().getTime();
                 totalTime += endTime - startTime;
                 console.log(url + '\n finish with ' + (endTime - startTime))
-                //console.log(response);
+
+                if (!response.isSuccess) {
+                    resolve(url)
+                    return;
+                }
+
                 var resData =  new Uint8ClampedArray(response); 
-                /*for (var i=0;i<response.length;i++) {
-                    imgdata.data[i] = response[i];
-                }*/
+
                 var count = 0;
                 for (var i=0;i<resData.length;i++) {
                     if (imgdata.data[i]!=resData[i]) {
@@ -44,9 +53,7 @@ function loadingImage(url, W, H) {
                         imgdata.data[i] = resData[i];
                     }
                 }
-                //console.log('count : '+ count);
-                //imgdata.data =
-                //console.log(imgdata.data)
+
                 ctxt.putImageData(imgdata,0,0,0,0,W,H);
                 try {
                     var retURL = canvas.toDataURL()
@@ -62,7 +69,10 @@ function loadingImage(url, W, H) {
     });
 }
 
+
 (async () => {
+    console.log(choice);
+
     for (var index=0;index < imgs.length;index++) {
         var img = imgs[index];
         //console.log('img' + index +' (' + img.width +',' + img.height +')' + img.src);

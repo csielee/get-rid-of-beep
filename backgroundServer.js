@@ -123,11 +123,20 @@ chrome.runtime.onMessage.addListener(
         
         // 偵測人臉
         var faces = face(data, data.width, data.height)
+        if (faces.length == 0) {
+            data.isSuccess = false;
+            sendResponse(data);
+        }
+
         // 進行馬賽克
-        if (data.useCPU)
+        if (data.useCPU) {
+            console.log('use CPU to mosaic')
             var result = mosaicWithCPU(data, data.width, data.height)
-        else
+        }
+        else {
+            console.log('use GPU to mosaic')
             var result = mosaicWithGPU(data, data.width, data.height)
+        }
         
         // 把人臉馬賽克
         faces.forEach(rect => {
@@ -144,5 +153,6 @@ chrome.runtime.onMessage.addListener(
         /*data = Object.assign(data, result)
         data.length = length;*/
         // 將資料丟回去 context script
+        data.isSuccess = true;
         sendResponse(data);
 });
