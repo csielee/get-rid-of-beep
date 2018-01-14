@@ -44,7 +44,6 @@ function mosaicKernel(length,w,h,isCPU=false) {
             width : w,
             height : h,
             windowSize : windowSize,
-            debug : true,
         }
     }
     var device = gpu;
@@ -83,7 +82,7 @@ function testMosaic() {
 }
 
 function mosaicWithGPU(data, width, height) {
-    var kernel = mosaicKernel(data.length, width, height);
+    var kernel = mosaicKernel(data.length, width, height,false);
     return kernel(data, randomArr, randomArr.length);
 }
 
