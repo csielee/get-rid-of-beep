@@ -96,6 +96,7 @@ var maxwidth = 0;
 })*/
 
 var a = async () => {
+    console.log(choice);
     for (var index=0;index < imgs.length;index++) {
         var img = imgs[index];
         //console.log('img' + index +' (' + img.width +',' + img.height +')' + img.src);

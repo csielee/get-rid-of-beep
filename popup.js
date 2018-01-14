@@ -106,33 +106,26 @@ function saveBackgroundColor(url, color) {
 document.addEventListener('DOMContentLoaded', () => {
   getCurrentTabUrl((url) => {
     var dropdown = document.getElementById('dropdown');
-
-    // Load the saved background color for this page and modify the dropdown
-    // value, if needed.
-    getSavedBackgroundColor(url, (savedColor) => {
-      if (savedColor) {
-        changeBackgroundColor(savedColor);
-        dropdown.value = savedColor;
-      }
-    });
+    var choice;
 
     // Ensure the background color is changed and saved when the dropdown
     // selection changes.
     dropdown.addEventListener('change', () => {
-      changeBackgroundColor(dropdown.value);
-      saveBackgroundColor(url, dropdown.value);
+      choice = dropdown.value;
     });
 
     var catchImgButton = document.getElementById('catchImg');
 
     catchImgButton.addEventListener('click', ()=>{
-        var test = chrome.tabs.executeScript(null, {
-            file : 'work.js'
-        },(data) => {
-            /*catchImgButton.innerText = data.teststring;
-            console.log(data);*/
-            console.log(data);
-            console.log(data[0]);
+        chrome.tabs.executeScript({ code: 'choice = ' + choice + ';' }, function() {
+            var test = chrome.tabs.executeScript(null, {
+                file : 'work.js'
+            },(data) => {
+                /*catchImgButton.innerText = data.teststring;
+                console.log(data);*/
+                console.log(data);
+                console.log(data[0]);
+            });
         });
     });
   });
