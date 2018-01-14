@@ -28,11 +28,23 @@ function loadingImage(url, W, H) {
             test.length = imgdata.data.length;
             test.width = W;
             test.height = H;
-            // use cpu
-            if (choice === 0)
-                test.useCPU = true;
-            else
-                test.useGPU = true;
+
+            // choose device
+            switch(choice) {
+                case 0: 
+                    test.useJS = true;
+                    break;
+                case 1:
+                    test.useGPU = true;
+                    break;
+                /*case 2:
+                    test.useJS = true;
+                    break;*/
+                default:
+                    test.useGPU = true;
+                    break;
+            }       
+                
             startTime = new Date().getTime();
             chrome.runtime.sendMessage(test, (response) => {
                 endTime = new Date().getTime();

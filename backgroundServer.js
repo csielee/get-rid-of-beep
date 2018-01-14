@@ -1,6 +1,7 @@
 console.log("I am event 2")
 
 const gpu = new GPU();
+const cpu = new GPU({ mode: 'cpu' });
 
 function grayKernel(length) {
     var kernel = gpu.createKernel(function(data) {
@@ -33,7 +34,7 @@ while(arr.length!=0) {
     randomArr.push(arr.splice(r,1)[0]);
 }
 
-function mosaicKernel(length,w,h) {
+function mosaicKernel(length,w,h,isCPU=false) {
     //const depth = 4; // r,b,g,a
     //let width = w;
     //let height = h;
@@ -43,9 +44,13 @@ function mosaicKernel(length,w,h) {
             width : w,
             height : h,
             windowSize : windowSize,
+            debug : true,
         }
     }
-    var kernel = gpu.createKernel(function(data,random,random_length) {
+    var device = gpu;
+    if (isCPU)
+        device = cpu;
+    var kernel = device.createKernel(function(data,random,random_length) {
         var colspace = this.constants.width*this.constants.depth;
         var x = this.thread.x % colspace;
         x = Math.floor(x/this.constants.windowSize)
@@ -83,6 +88,11 @@ function mosaicWithGPU(data, width, height) {
 }
 
 function mosaicWithCPU(data, width, height) {
+    var kernel = mosaicKernel(data.length, width, height, true);
+    return kernel(data, randomArr, randomArr.length);
+}
+
+function mosaicWithJS(data, width, height) {
     var result = [];
     for (let i=0;i<data.length;i++) {
         var colspace = width*4;
@@ -133,9 +143,13 @@ chrome.runtime.onMessage.addListener(
             console.log('use CPU to mosaic')
             var result = mosaicWithCPU(data, data.width, data.height)
         }
-        else {
+        if (data.useGPU) {
             console.log('use GPU to mosaic')
             var result = mosaicWithGPU(data, data.width, data.height)
+        }
+        if (data.useJS) {
+            console.log('use JS to mosaic')
+            var result = mosaicWithJS(data, data.width, data.height)
         }
         
         // 把人臉馬賽克
