@@ -77,9 +77,29 @@ function testMosaic() {
     return result;
 }
 
-function mosaic(data, width, height) {
+function mosaicWithGPU(data, width, height) {
     var kernel = mosaicKernel(data.length, width, height);
     return kernel(data, randomArr, randomArr.length);
+}
+
+function mosaicWithCPU(data, width, height) {
+    var result = [];
+    for (let i=0;i<data.length;i++) {
+        var colspace = width*4;
+        var x = i % colspace;
+        x = Math.floor(x/windowSize)
+        x = Math.floor(x/4)
+        var y = i / colspace;
+        y = Math.floor(y);
+        y = Math.floor(y/windowSize)
+
+        var r = randomArr[x % randomArr.length];
+        x = x*windowSize + r % windowSize;
+        y = y*windowSize + Math.floor(r / windowSize);
+        
+        result[i] = data[x*4+y*width*4+i%4];
+    }
+    return result;
 }
 
 function face(img, W, H) {
@@ -98,13 +118,18 @@ chrome.runtime.onMessage.addListener(
         console.log(sender.tab ?   
             "取得到tab，這是來自內容腳本的訊息：" + sender.tab.url   
             : "沒有tab，這是來自擴充功能內部的訊息");  
-        // create gpu kernel
-        //let kernel = grayKernel(data.length)
-        // use gpu kernel
-        var length = data.length;
-        //var result = kernel(data);
+
+        //var length = data.length;
+        
+        // 偵測人臉
         var faces = face(data, data.width, data.height)
-        var result = mosaic(data, data.width, data.height)
+        // 進行馬賽克
+        if (data.useCPU)
+            var result = mosaicWithCPU(data, data.width, data.height)
+        else
+            var result = mosaicWithGPU(data, data.width, data.height)
+        
+        // 把人臉馬賽克
         faces.forEach(rect => {
             var colspace = data.width
             for (let x = rect.x;x <= rect.x + rect.width;x++)
@@ -118,6 +143,6 @@ chrome.runtime.onMessage.addListener(
 
         /*data = Object.assign(data, result)
         data.length = length;*/
-        
+        // 將資料丟回去 context script
         sendResponse(data);
 });
