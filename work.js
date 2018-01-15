@@ -1,15 +1,15 @@
 var imgs = document.querySelectorAll('img');
-var loadimg = document.createElement('img');
 var imgCache = {};
-var startTime,endTime;
+//var startTime,endTime;
 var totalTime = 0;
+var useTime = 0;
 
 function loadingImage(url, W, H) {
     if (imgCache[url])
         return imgCache[url];
 
     return new Promise((resolve, reject)=>{
-
+        var loadimg = document.createElement('img');
         loadimg.setAttribute("crossOrigin",'Anonymous');
         loadimg.onload = () => {
             if (loadimg.width == 0 || loadimg.height == 0 || W == 0 || H == 0) {
@@ -23,7 +23,7 @@ function loadingImage(url, W, H) {
             ctxt.clearRect(0,0,W,H);
             ctxt.drawImage(loadimg, 0, 0, W, H);
             var imgdata = ctxt.getImageData(0, 0, W, H);
-            console.log(imgdata.data)
+
             var test = Object.assign({}, imgdata.data);
             test.length = imgdata.data.length;
             test.width = W;
@@ -43,13 +43,15 @@ function loadingImage(url, W, H) {
                 default:
                     test.useGPU = true;
                     break;
-            }       
+            }
+            // default
+            test.windowSize = 3;       
                 
-            startTime = new Date().getTime();
+            test.startTime = new Date().getTime();
             chrome.runtime.sendMessage(test, (response) => {
-                endTime = new Date().getTime();
-                totalTime += endTime - startTime;
-                console.log(url + '\n finish with ' + (endTime - startTime))
+                var endTime = new Date().getTime();
+                totalTime += endTime - test.startTime;
+                console.log(url + '\n finish with ' + (endTime - test.startTime))
 
                 if (!response.isSuccess) {
                     resolve(url)
@@ -81,28 +83,22 @@ function loadingImage(url, W, H) {
     });
 }
 
-
-(async () => {
-    console.log(choice);
-
-    for (var index=0;index < imgs.length;index++) {
-        var img = imgs[index];
-        //console.log('img' + index +' (' + img.width +',' + img.height +')' + img.src);
-        console.log(`start img ${index}`)
-        try {
-            var url = await loadingImage(img.src, img.width, img.height)
-            //console.log(url)
-            img.src = url
-            console.log(`finish img ${index}`)
-        } catch(error) {
-            console.log(error)
+var finishCount = 0;
+var startTime = new Date().getTime()
+imgs.forEach((img, index)=>{
+    console.log(`start img ${index}`)
+    loadingImage(img.src, img.width, img.height).then((url)=>{
+        img.src = url;
+        console.log(`finish img ${index}`)
+        finishCount++;
+        if (finishCount == imgs.length) {
+            var endTime = new Date().getTime()
+            useTime = endTime - startTime;
+            console.log(`execute time : ${totalTime/1000}\nuse time : ${useTime/1000}`);
+            if (showTime)
+                alert(`execute time : ${totalTime/1000}\nuse time : ${useTime/1000}`)
         }
-        //console.log(url)
-    }
-    console.log('execute time : ' + totalTime/1000);
-    if (showTime)
-        alert('execute time : ' + totalTime/1000)
-})()
-
+    }).catch(error=>console.error(error))
+})
 
 totalTime;
