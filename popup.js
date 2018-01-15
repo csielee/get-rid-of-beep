@@ -114,10 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
       choice = dropdown.value;
     });
 
+    var showTime = document.getElementById('showTime')
+
     var catchImgButton = document.getElementById('catchImg');
 
     catchImgButton.addEventListener('click', ()=>{
-        chrome.tabs.executeScript({ code: 'choice = ' + choice + ';' }, function() {
+        chrome.tabs.executeScript({ code: 'choice = ' + choice + ';showTime = '+ showTime.checked + ';' }, function() {
             var test = chrome.tabs.executeScript(null, {
                 file : 'work.js'
             },(data) => {

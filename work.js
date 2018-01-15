@@ -99,8 +99,9 @@ function loadingImage(url, W, H) {
         }
         //console.log(url)
     }
-    console.log('use time : ' + totalTime/1000);
-    alert('use time : ' + totalTime/1000)
+    console.log('execute time : ' + totalTime/1000);
+    if (showTime)
+        alert('execute time : ' + totalTime/1000)
 })()
 
 
